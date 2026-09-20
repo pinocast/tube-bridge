@@ -132,18 +132,18 @@ function processConversion() {
 
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    const sharedText = params.get('shared_url') || params.get('shared_text');
+    // Intercetta tutte le possibili variabili inviate dal menu condividi di Android
+    const sharedText = params.get('url') || params.get('text') || params.get('title');
     
     if (sharedText) {
         const urlRegex = /(https?:\/\/[^\s]+)/;
         const matchUrl = sharedText.match(urlRegex);
-        const urlToProcess = matchUrl ? matchUrl : sharedText;
+        const urlToProcess = matchUrl ? matchUrl[0] : sharedText;
 
         const id = extractVideoId(urlToProcess);
         if (id) {
             document.getElementById('ytLink').value = urlToProcess;
-            // Delay execution slightly to ensure DOM elements are fully operational
-            setTimeout(processConversion, 100);
+            setTimeout(processConversion, 150);
         }
     }
 });
