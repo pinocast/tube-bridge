@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convertitore Invidious</title>
+    <title>Invidious Converter</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body {
@@ -38,20 +38,6 @@
             background-color: #fff;
             box-sizing: border-box;
         }
-        button {
-            width: 100%;
-            background-color: #cc181e;
-            color: white;
-            border: none;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-bottom: 15px;
-        }
-        button:hover { background-color: #b01318; }
         .result-box {
             margin-top: 10px;
             padding: 20px;
@@ -79,81 +65,73 @@
 <body>
 
 <div class="container">
-    <h2>Convertitore Invidious</h2>
-    <p class="info-text">Incolla un link manuale o condividilo direttamente dall'app di YouTube.</p>
+    <h2>Invidious Converter</h2>
+    <p class="info-text">Paste a YouTube link or share it directly. Conversion is instant.</p>
     
-    <input type="text" id="ytLink" placeholder="Incolla qui il link di YouTube...">
+    <!-- The oninput event runs the conversion automatically as you type or paste -->
+    <input type="text" id="ytLink" placeholder="Paste YouTube link here..." oninput="processConversion()">
     
-    <label for="server">Scegli il server:</label>
-    <select id="server" onchange="processaInputManuale()">
-        <!-- Impostato nerdvpn.de come default grazie all'attributo 'selected' -->
+    <label for="server">Choose Server:</label>
+    <!-- The onchange event updates the final link immediately when you switch the server -->
+    <select id="server" onchange="processConversion()">
         <option value="invidious.nerdvpn.de" selected>invidious.nerdvpn.de</option>
         <option value="invidious.privacydev.net">invidious.privacydev.net</option>
         <option value="yewtu.be">yewtu.be</option>
         <option value="inv.tux.pizza">inv.tux.pizza</option>
     </select>
     
-    <button onclick="processaInputManuale()">Converti Link</button>
-    
     <div id="resultBox" class="result-box">
-        <p style="margin: 0 0 10px 0; font-weight: bold;">Il tuo video anonimo è pronto:</p>
-        <a id="invidiousLink" class="btn-link" href="#" target="_blank">Apri Video senza Pubblicità 🚀</a>
+        <p style="margin: 0 0 10px 0; font-weight: bold;">Your anonymous video is ready:</p>
+        <a id="invidiousLink" class="btn-link" href="#" target="_blank">Open Ad-Free Video 🚀</a>
     </div>
 </div>
 
 <script>
-// Registrazione del Service Worker obbligatorio per le funzioni PWA
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
 
-function estraiVideoId(testo) {
+function extractVideoId(text) {
     const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?\s]+)/;
-    const match = testo.match(regex);
+    const match = text.match(regex);
     return match ? match[1] : null;
 }
 
-// Gestisce la conversione quando l'utente incolla il link a mano o preme il bottone
-function processaInputManuale() {
-    const inputTesto = document.getElementById('ytLink').value.trim();
+// Main function handling the real-time automatic conversion
+function processConversion() {
+    const inputText = document.getElementById('ytLink').value.trim();
     const server = document.getElementById('server').value;
     const resultBox = document.getElementById('resultBox');
     const resultLink = document.getElementById('invidiousLink');
     
-    if (inputTesto) {
-        const id = estraiVideoId(inputTesto);
+    if (inputText) {
+        const id = extractVideoId(inputText);
         if (id) {
-            const nuovoUrl = `https://${server}/watch?v=${id}`;
-            resultLink.href = nuovoUrl;
+            const newUrl = `https://${server}/watch?v=${id}`;
+            resultLink.href = newUrl;
             resultBox.style.display = 'block';
         } else {
-            alert('⚠️ Il testo inserito non contiene un link YouTube valido.');
             resultBox.style.display = 'none';
         }
+    } else {
+        resultBox.style.display = 'none';
     }
 }
 
-// Cattura automatica se il link viene inviato tramite il menu "Condividi" di Android
+// Automatic capture when the link arrives from Android's "Share" menu (Share Target)
 window.addEventListener('DOMContentLoaded', () => {
-    const parametri = new URLSearchParams(window.location.search);
-    const testoCondiviso = parametri.get('shared_url') || parametri.get('shared_text');
+    const params = new URLSearchParams(window.location.search);
+    const sharedText = params.get('shared_url') || params.get('shared_text');
     
-    if (testoCondiviso) {
-        // Pulisce il testo se Android invia anche il titolo insieme all'URL
+    if (sharedText) {
         const urlRegex = /(https?:\/\/[^\s]+)/;
-        const matchUrl = testoCondiviso.match(urlRegex);
-        const urlDaElaborare = matchUrl ? matchUrl[1] : testoCondiviso;
+        const matchUrl = sharedText.match(urlRegex);
+        const urlToProcess = matchUrl ? matchUrl[1] : sharedText;
 
-        const id = estraiVideoId(urlDaElaborare);
+        const id = extractVideoId(urlToProcess);
         if (id) {
-            document.getElementById('ytLink').value = urlDaElaborare;
-            const server = document.getElementById('server').value;
-            const resultBox = document.getElementById('resultBox');
-            const resultLink = document.getElementById('invidiousLink');
-            
-            const nuovoUrl = `https://${server}/watch?v=${id}`;
-            resultLink.href = nuovoUrl;
-            resultBox.style.display = 'block';
+            document.getElementById('ytLink').value = urlToProcess;
+            processConversion();
         }
     }
 });
