@@ -108,7 +108,8 @@ if ('serviceWorker' in navigator) {
 function extractVideoId(text) {
     const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?\s]+)/;
     const match = text.match(regex);
-    return match ? match : null;
+    // BUG FIX: Se c'è una corrispondenza, restituisce solo l'indice [1] (l'ID pulito)
+    return match ? match[1] : null;
 }
 
 function processConversion() {
@@ -132,13 +133,12 @@ function processConversion() {
 
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    // Intercetta tutte le possibili variabili inviate dal menu condividi di Android
     const sharedText = params.get('url') || params.get('text') || params.get('title');
     
     if (sharedText) {
         const urlRegex = /(https?:\/\/[^\s]+)/;
         const matchUrl = sharedText.match(urlRegex);
-        const urlToProcess = matchUrl ? matchUrl[0] : sharedText;
+        const urlToProcess = matchUrl ? matchUrl[1] : sharedText;
 
         const id = extractVideoId(urlToProcess);
         if (id) {
