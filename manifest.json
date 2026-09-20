@@ -1,0 +1,25 @@
+{
+  "name": "Convertitore Invidious",
+  "short_name": "InvidiousConv",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f4f9",
+  "theme_color": "#cc181e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "share_target": {
+    "action": "index.html",
+    "method": "GET",
+    "params": {
+      "text": "shared_text",
+      "url": "shared_url"
+    }
+  }
+}
+
