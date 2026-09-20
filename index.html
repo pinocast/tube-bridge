@@ -38,6 +38,20 @@
             background-color: #fff;
             box-sizing: border-box;
         }
+        button {
+            width: 100%;
+            background-color: #cc181e;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 15px;
+        }
+        button:hover { background-color: #b01318; }
         .result-box {
             margin-top: 10px;
             padding: 20px;
@@ -66,19 +80,19 @@
 
 <div class="container">
     <h2>Invidious Converter</h2>
-    <p class="info-text">Paste a YouTube link or share it directly. Conversion is instant.</p>
+    <p class="info-text">Paste a YouTube link or share it directly from the YouTube app.</p>
     
-    <!-- The oninput event runs the conversion automatically as you type or paste -->
-    <input type="text" id="ytLink" placeholder="Paste YouTube link here..." oninput="processConversion()">
+    <input type="text" id="ytLink" placeholder="Paste YouTube link here...">
     
     <label for="server">Choose Server:</label>
-    <!-- The onchange event updates the final link immediately when you switch the server -->
     <select id="server" onchange="processConversion()">
         <option value="invidious.nerdvpn.de" selected>invidious.nerdvpn.de</option>
         <option value="invidious.privacydev.net">invidious.privacydev.net</option>
         <option value="yewtu.be">yewtu.be</option>
         <option value="inv.tux.pizza">inv.tux.pizza</option>
     </select>
+    
+    <button onclick="processConversion()">Convert Link</button>
     
     <div id="resultBox" class="result-box">
         <p style="margin: 0 0 10px 0; font-weight: bold;">Your anonymous video is ready:</p>
@@ -94,10 +108,9 @@ if ('serviceWorker' in navigator) {
 function extractVideoId(text) {
     const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?\s]+)/;
     const match = text.match(regex);
-    return match ? match[1] : null;
+    return match ? match : null;
 }
 
-// Main function handling the real-time automatic conversion
 function processConversion() {
     const inputText = document.getElementById('ytLink').value.trim();
     const server = document.getElementById('server').value;
@@ -111,14 +124,12 @@ function processConversion() {
             resultLink.href = newUrl;
             resultBox.style.display = 'block';
         } else {
+            alert('⚠️ Please enter a valid YouTube link.');
             resultBox.style.display = 'none';
         }
-    } else {
-        resultBox.style.display = 'none';
     }
 }
 
-// Automatic capture when the link arrives from Android's "Share" menu (Share Target)
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const sharedText = params.get('shared_url') || params.get('shared_text');
@@ -126,12 +137,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (sharedText) {
         const urlRegex = /(https?:\/\/[^\s]+)/;
         const matchUrl = sharedText.match(urlRegex);
-        const urlToProcess = matchUrl ? matchUrl[1] : sharedText;
+        const urlToProcess = matchUrl ? matchUrl : sharedText;
 
         const id = extractVideoId(urlToProcess);
         if (id) {
             document.getElementById('ytLink').value = urlToProcess;
-            processConversion();
+            // Delay execution slightly to ensure DOM elements are fully operational
+            setTimeout(processConversion, 100);
         }
     }
 });
