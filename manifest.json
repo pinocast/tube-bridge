@@ -1,26 +1,30 @@
 {
-  "name": "Convertitore Invidious",
+  "name": "Invidious Converter",
   "short_name": "InvidiousConv",
   "start_url": "index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f4f4f9",
   "theme_color": "#cc181e",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://flaticon.com",
+      "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "share_target": {
-    "action": "https://pinocast.github.io/tube-bridge/",
+    "action": "index.html",
     "method": "GET",
     "params": {
-      "text": "shared_text",
-      "url": "shared_url"
+      "title": "title",
+      "text": "text",
+      "url": "url"
     }
   }
 }
+
 
 
