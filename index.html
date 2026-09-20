@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertitore Invidious</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        h2 { color: #cc181e; margin-top: 0; margin-bottom: 20px; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            background-color: #cc181e;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 15px;
+        }
+        button:hover { background-color: #b01318; }
+        .result-box {
+            margin-top: 10px;
+            padding: 20px;
+            background: #eef9ff;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            display: none;
+            word-break: break-all;
+        }
+        .btn-link {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        .btn-link:hover { background-color: #0056b3; }
+        .info-text { font-size: 14px; color: #666; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Convertitore Invidious</h2>
+    <p class="info-text">Incolla un link manuale o condividilo direttamente dall'app di YouTube.</p>
+    
+    <input type="text" id="ytLink" placeholder="Incolla qui il link di YouTube...">
+    
+    <label for="server">Scegli il server:</label>
+    <select id="server" onchange="processaInputManuale()">
+        <!-- Impostato nerdvpn.de come default grazie all'attributo 'selected' -->
+        <option value="invidious.nerdvpn.de" selected>invidious.nerdvpn.de</option>
+        <option value="invidious.privacydev.net">invidious.privacydev.net</option>
+        <option value="yewtu.be">yewtu.be</option>
+        <option value="inv.tux.pizza">inv.tux.pizza</option>
+    </select>
+    
+    <button onclick="processaInputManuale()">Converti Link</button>
+    
+    <div id="resultBox" class="result-box">
+        <p style="margin: 0 0 10px 0; font-weight: bold;">Il tuo video anonimo è pronto:</p>
+        <a id="invidiousLink" class="btn-link" href="#" target="_blank">Apri Video senza Pubblicità 🚀</a>
+    </div>
+</div>
+
+<script>
+// Registrazione del Service Worker obbligatorio per le funzioni PWA
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
+
+function estraiVideoId(testo) {
+    const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?\s]+)/;
+    const match = testo.match(regex);
+    return match ? match[1] : null;
+}
+
+// Gestisce la conversione quando l'utente incolla il link a mano o preme il bottone
+function processaInputManuale() {
+    const inputTesto = document.getElementById('ytLink').value.trim();
+    const server = document.getElementById('server').value;
+    const resultBox = document.getElementById('resultBox');
+    const resultLink = document.getElementById('invidiousLink');
+    
+    if (inputTesto) {
+        const id = estraiVideoId(inputTesto);
+        if (id) {
+            const nuovoUrl = `https://${server}/watch?v=${id}`;
+            resultLink.href = nuovoUrl;
+            resultBox.style.display = 'block';
+        } else {
+            alert('⚠️ Il testo inserito non contiene un link YouTube valido.');
+            resultBox.style.display = 'none';
+        }
+    }
+}
+
+// Cattura automatica se il link viene inviato tramite il menu "Condividi" di Android
+window.addEventListener('DOMContentLoaded', () => {
+    const parametri = new URLSearchParams(window.location.search);
+    const testoCondiviso = parametri.get('shared_url') || parametri.get('shared_text');
+    
+    if (testoCondiviso) {
+        // Pulisce il testo se Android invia anche il titolo insieme all'URL
+        const urlRegex = /(https?:\/\/[^\s]+)/;
+        const matchUrl = testoCondiviso.match(urlRegex);
+        const urlDaElaborare = matchUrl ? matchUrl[1] : testoCondiviso;
+
+        const id = estraiVideoId(urlDaElaborare);
+        if (id) {
+            document.getElementById('ytLink').value = urlDaElaborare;
+            const server = document.getElementById('server').value;
+            const resultBox = document.getElementById('resultBox');
+            const resultLink = document.getElementById('invidiousLink');
+            
+            const nuovoUrl = `https://${server}/watch?v=${id}`;
+            resultLink.href = nuovoUrl;
+            resultBox.style.display = 'block';
+        }
+    }
+});
+</script>
+
+</body>
+</html>
