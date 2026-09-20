@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invidious Converter</title>
+
+    <!-- PWA / app-like behavior -->
+    <meta name="theme-color" content="#cc181e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
     <link rel="manifest" href="manifest.json">
+
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -101,14 +108,15 @@
 </div>
 
 <script>
+// Registrazione service worker (necessario per PWA installabile)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
 
 function extractVideoId(text) {
+    // Accetta anche URL senza protocollo
     const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?\s]+)/;
     const match = text.match(regex);
-    // BUG FIX: Se c'è una corrispondenza, restituisce solo l'indice [1] (l'ID pulito)
     return match ? match[1] : null;
 }
 
@@ -118,36 +126,32 @@ function processConversion() {
     const resultBox = document.getElementById('resultBox');
     const resultLink = document.getElementById('invidiousLink');
     
-    if (inputText) {
-        const id = extractVideoId(inputText);
-        if (id) {
-            const newUrl = `https://${server}/watch?v=${id}`;
-            resultLink.href = newUrl;
-            resultBox.style.display = 'block';
-        } else {
-            alert('⚠️ Please enter a valid YouTube link.');
-            resultBox.style.display = 'none';
-        }
+    if (!inputText) {
+        resultBox.style.display = 'none';
+        return;
+    }
+
+    const id = extractVideoId(inputText);
+    if (id) {
+        const newUrl = `https://${server}/watch?v=${id}`;
+        resultLink.href = newUrl;
+        resultBox.style.display = 'block';
+    } else {
+        alert('⚠️ Please enter a valid YouTube link.');
+        resultBox.style.display = 'none';
     }
 }
 
+// Gestione share_target (URL condiviso da altre app)
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    const sharedText = params.get('url') || params.get('text') || params.get('title');
-    
-    if (sharedText) {
-        const urlRegex = /(https?:\/\/[^\s]+)/;
-        const matchUrl = sharedText.match(urlRegex);
-        const urlToProcess = matchUrl ? matchUrl[1] : sharedText;
 
-        const id = extractVideoId(urlToProcess);
-        if (id) {
-            document.getElementById('ytLink').value = urlToProcess;
-            setTimeout(processConversion, 150);
-        }
-    }
-});
-</script>
+    // Priorità: url > text > title
+    const sharedUrl = params.get('url');
+    const sharedText = params.get('text');
+    const sharedTitle = params.get('title');
 
-</body>
-</html>
+    const sharedValue = sharedUrl || sharedText || sharedTitle;
+    if (!sharedValue) return;
+
+    // Se è già un URL completo, lo uso; altrimenti provo a estrarre un URL
