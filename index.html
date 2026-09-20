@@ -114,7 +114,6 @@ if ('serviceWorker' in navigator) {
 }
 
 function extractVideoId(text) {
-    // Accetta anche URL senza protocollo
     const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?\s]+)/;
     const match = text.match(regex);
     return match ? match[1] : null;
@@ -126,32 +125,38 @@ function processConversion() {
     const resultBox = document.getElementById('resultBox');
     const resultLink = document.getElementById('invidiousLink');
     
-    if (!inputText) {
-        resultBox.style.display = 'none';
-        return;
-    }
-
-    const id = extractVideoId(inputText);
-    if (id) {
-        const newUrl = `https://${server}/watch?v=${id}`;
-        resultLink.href = newUrl;
-        resultBox.style.display = 'block';
-    } else {
-        alert('⚠️ Please enter a valid YouTube link.');
-        resultBox.style.display = 'none';
+    if (inputText) {
+        const id = extractVideoId(inputText);
+        if (id) {
+            const newUrl = `https://${server}/watch?v=${id}`;
+            resultLink.href = newUrl;
+            resultBox.style.display = 'block';
+        } else {
+            alert('⚠️ Please enter a valid YouTube link.');
+            resultBox.style.display = 'none';
+        }
     }
 }
 
 // Gestione share_target (URL condiviso da altre app)
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
+    const sharedText = params.get('url') || params.get('text') || params.get('title');
+    
+    if (!sharedText) return;
 
-    // Priorità: url > text > title
-    const sharedUrl = params.get('url');
-    const sharedText = params.get('text');
-    const sharedTitle = params.get('title');
+    // Cerco un URL dentro il testo condiviso
+    const urlRegex = /(https?:\/\/[^\s]+)/;
+    const matchUrl = sharedText.match(urlRegex);
+    const urlToProcess = matchUrl ? matchUrl[1] : sharedText;
 
-    const sharedValue = sharedUrl || sharedText || sharedTitle;
-    if (!sharedValue) return;
+    const id = extractVideoId(urlToProcess);
+    if (id) {
+        document.getElementById('ytLink').value = urlToProcess;
+        setTimeout(processConversion, 150);
+    }
+});
+</script>
 
-    // Se è già un URL completo, lo uso; altrimenti provo a estrarre un URL
+</body>
+</html>
