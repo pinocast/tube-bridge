@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tube Bridge</title>
+
+<!-- PWA / app-like behavior -->
+<meta name="theme-color" content="#cc181e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+  .container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+  h2 { color: #cc181e; margin-top: 0; margin-bottom: 20px; }
+  input, select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    background-color: #fff;
+    box-sizing: border-box;
+  }
+  button {
+    width: 100%;
+    background-color: #cc181e;
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 15px;
+  }
+  button:hover { background-color: #b01318; }
+  .result-box {
+    margin-top: 10px;
+    padding: 20px;
+    background: #eef9ff;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    display: none;
+    word-break: break-all;
+  }
+  .btn-link {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    padding: 12px 20px;
+    font-weight: bold;
+    border-radius: 6px;
+    margin-top: 15px;
+    transition: background 0.2s;
+  }
+  .btn-link:hover { background-color: #0056b3; }
+  .info-text { font-size: 14px; color: #666; margin-bottom: 20px; }
+
+  /* Server selection row */
+  .server-row { text-align: left; margin-bottom: 15px; }
+  .server-row label { display: block; margin-bottom: 6px; font-size: 14px; }
+  .server-row select { margin-bottom: 0; }
+  .empty-note {
+    font-size: 14px; color: #666; background: #fff8e5;
+    border: 1px solid #f0d98a; border-radius: 6px; padding: 10px;
+    margin: 0;
+  }
+
+  /* Settings */
+  .link-btn {
+    background: none; color: #007bff; border: none; width: auto;
+    padding: 4px; font-size: 14px; font-weight: normal;
+    text-decoration: underline; margin: 0 0 10px 0;
+  }
+  .link-btn:hover { background: none; color: #0056b3; }
+  .settings {
+    display: none; text-align: left; margin-top: 5px;
+    border-top: 1px solid #eee; padding-top: 15px;
+  }
+  .settings h3 { margin: 0 0 10px 0; font-size: 16px; }
+  .add-row { display: flex; gap: 8px; }
+  .add-row input { margin-bottom: 0; flex: 1; min-width: 0; }
+  .add-row button { width: auto; margin-bottom: 0; padding: 12px 16px; }
+  .error { color: #cc181e; font-size: 13px; min-height: 18px; margin: 6px 0 10px 0; }
+  .server-list { list-style: none; padding: 0; margin: 0; }
+  .server-list li {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border: 1px solid #eee; border-radius: 6px;
+    margin-bottom: 6px; font-size: 14px; word-break: break-all; gap: 8px;
+  }
+  .server-list button {
+    width: auto; background: none; color: #cc181e; border: none;
+    padding: 4px 8px; margin: 0; font-size: 18px; line-height: 1;
+  }
+  .server-list button:hover { background: #fdeaea; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Tube Bridge</h2>
+  <p class="info-text">Paste a YouTube link or share it directly from the YouTube app.</p>
+
+  <input type="text" id="ytLink" placeholder="Paste YouTube link here...">
+
+  <div class="server-row">
+    <label for="server">Server:</label>
+    <select id="server" onchange="onServerChange()"></select>
+    <p id="emptyNote" class="empty-note" style="display:none;">
+      No server configured yet. Open “Manage servers” below and add one.
+    </p>
+  </div>
+
+  <button onclick="processConversion()">Convert Link</button>
+
+  <div id="resultBox" class="result-box">
+    <p style="margin: 0 0 10px 0; font-weight: bold;">Your new video url is ready:</p>
+    <a id="serverLink" class="btn-link" href="#" target="_blank" rel="noopener">Open New Video Url 🚀</a>
+  </div>
+
+  <button class="link-btn" id="toggleSettings" onclick="toggleSettings()">Manage servers</button>
+
+  <div id="settings" class="settings">
+    <h3>Your servers</h3>
+    <div class="add-row">
+      <input type="text" id="newServer" placeholder="e.g. inv.example.org"
+             autocapitalize="none" autocorrect="off" spellcheck="false">
+      <button onclick="addServer()">Add</button>
+    </div>
+    <div id="serverError" class="error"></div>
+    <ul id="serverList" class="server-list"></ul>
+  </div>
+</div>
+
+<script>
+// Registrazione service worker (necessario per PWA installabile)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+/* ---------- Server configuration (stored in the browser) ---------- */
+const STORAGE_SERVERS = 'tb_servers';
+const STORAGE_SELECTED = 'tb_selected';
+
+function loadServers() {
+  try {
+    const list = JSON.parse(localStorage.getItem(STORAGE_SERVERS) || '[]');
+    return Array.isArray(list) ? list.filter(s => typeof s === 'string') : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveServers(list) {
+  try { localStorage.setItem(STORAGE_SERVERS, JSON.stringify(list)); } catch (e) {}
+}
+
+function loadSelected() {
+  try { return localStorage.getItem(STORAGE_SELECTED) || ''; } catch (e) { return ''; }
+}
+
+function saveSelected(value) {
+  try { localStorage.setItem(STORAGE_SELECTED, value); } catch (e) {}
+}
+
+// Accepts "inv.example.org", "https://inv.example.org/", "inv.example.org:3000/path" -> hostname[:port]
+function normalizeServer(raw) {
+  let value = raw.trim().toLowerCase();
+  if (!value) return null;
+  value = value.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const valid = /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}(:\d{1,5})?$/.test(value)
+             || /^localhost(:\d{1,5})?$/.test(value);
+  return valid ? value : null;
+}
+
+/* ---------- UI rendering ---------- */
+function renderServers() {
+  const servers = loadServers();
+  const select = document.getElementById('server');
+  const emptyNote = document.getElementById('emptyNote');
+  const list = document.getElementById('serverList');
+
+  // Dropdown
+  select.innerHTML = '';
+  servers.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    select.appendChild(opt);
+  });
+  const selected = loadSelected();
+  if (servers.includes(selected)) select.value = selected;
+  else if (servers.length) { select.value = servers[0]; saveSelected(servers[0]); }
+
+  select.style.display = servers.length ? 'block' : 'none';
+  emptyNote.style.display = servers.length ? 'none' : 'block';
+
+  // Management list
+  list.innerHTML = '';
+  servers.forEach(s => {
+    const li = document.createElement('li');
+    const name = document.createElement('span');
+    name.textContent = s;
+    const del = document.createElement('button');
+    del.textContent = '×';
+    del.title = 'Remove ' + s;
+    del.setAttribute('aria-label', 'Remove ' + s);
+    del.onclick = () => removeServer(s);
+    li.append(name, del);
+    list.appendChild(li);
+  });
+}
+
+function toggleSettings(forceOpen) {
+  const panel = document.getElementById('settings');
+  const open = forceOpen === true ? true : panel.style.display !== 'block';
+  panel.style.display = open ? 'block' : 'none';
+  if (open) document.getElementById('newServer').focus();
+}
+
+function addServer() {
+  const input = document.getElementById('newServer');
+  const err = document.getElementById('serverError');
+  const server = normalizeServer(input.value);
+  err.textContent = '';
+
+  if (!server) {
+    err.textContent = 'Enter a valid server address, e.g. inv.example.org';
+    return;
+  }
+  const servers = loadServers();
+  if (servers.includes(server)) {
+    err.textContent = 'This server is already in the list.';
+    return;
+  }
+  servers.push(server);
+  saveServers(servers);
+  saveSelected(server);   // newly added server becomes the active one
+  input.value = '';
+  renderServers();
+  processConversion();    // update result if a link is already present
+}
+
+function removeServer(server) {
+  const servers = loadServers().filter(s => s !== server);
+  saveServers(servers);
+  if (loadSelected() === server) saveSelected(servers[0] || '');
+  renderServers();
+  processConversion();
+}
+
+function onServerChange() {
+  saveSelected(document.getElementById('server').value);
+  processConversion();
+}
+
+document.getElementById('newServer').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addServer();
+});
+
+/* ---------- Conversion ---------- */
+function extractVideoId(text) {
+  const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?\s]+)/;
+  const match = text.match(regex);
+  return match ? match[1] : null;
+}
+
+function processConversion() {
+  const inputText = document.getElementById('ytLink').value.trim();
+  const server = document.getElementById('server').value;
+  const resultBox = document.getElementById('resultBox');
+  const resultLink = document.getElementById('serverLink');
+
+  if (!inputText) { resultBox.style.display = 'none'; return; }
+
+  if (!server) {
+    resultBox.style.display = 'none';
+    toggleSettings(true);
+    document.getElementById('serverError').textContent = 'Add a server first to convert links.';
+    return;
+  }
+
+  const id = extractVideoId(inputText);
+  if (id) {
+    resultLink.href = `https://${server}/watch?v=${encodeURIComponent(id)}`;
+    resultBox.style.display = 'block';
+  } else {
+    alert('⚠️ Please enter a valid YouTube link.');
+    resultBox.style.display = 'none';
+  }
+}
+
+/* ---------- Init + share_target (URL condiviso da altre app) ---------- */
+window.addEventListener('DOMContentLoaded', () => {
+  renderServers();
+
+  const params = new URLSearchParams(window.location.search);
+  const sharedText = params.get('url') || params.get('text') || params.get('title');
+  if (!sharedText) return;
+
+  // Cerco un URL dentro il testo condiviso
+  const urlRegex = /(https?:\/\/[^\s]+)/;
+  const matchUrl = sharedText.match(urlRegex);
+  const urlToProcess = matchUrl ? matchUrl[1] : sharedText;
+
+  const id = extractVideoId(urlToProcess);
+  if (id) {
+    document.getElementById('ytLink').value = urlToProcess;
+    setTimeout(processConversion, 150);
+  }
+});
+</script>
+
+</body>
+</html>
