@@ -285,7 +285,7 @@ document.getElementById('newServer').addEventListener('keydown', e => {
 
 /* ---------- Conversion ---------- */
 function extractVideoId(text) {
-  const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?\s]+)/;
+  const regex = /(?:youtube\.com\/watch\?(?:[^#\s]*&)?v=|youtu\.be\/|youtube\.com\/(?:embed|v|live|shorts)\/)([^&?#\s\/]+)/;
   const match = text.match(regex);
   return match ? match[1] : null;
 }
